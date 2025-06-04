@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+prisma
+openai>=1.0.0
+python-dotenv
+aioredis
+typing-extensions
