@@ -1,10 +1,10 @@
 import os
-import openai
 from typing import List, Dict
+from src.ai_agents.open_ai import OpenAiAgent
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+open_ai_agent = OpenAiAgent()
 
-async def optimize_prompt(
+def optimize_prompt(
     last_prompt: str,
     avg_score: float,
     failure_samples: List[Dict]
@@ -34,8 +34,8 @@ async def optimize_prompt(
         "Please produce a new prompt that will improve Precision@10.\n"
     )
 
-    response = await openai.ChatCompletion.acreate(
-        model="gpt-4",
+    response = open_ai_agent.client.chat.completions.create(
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_content}
@@ -44,6 +44,6 @@ async def optimize_prompt(
         max_tokens=200
     )
 
-    new_prompt = response.choices[0].message["content"].strip()
+    new_prompt = response.choices[0].message.content.strip()
     return new_prompt
 

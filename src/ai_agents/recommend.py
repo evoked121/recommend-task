@@ -1,13 +1,14 @@
 import os
 import re
 import json
-import openai
 from typing import List
-from dataclass import Story
+from src.dataclass import Story
 from dotenv import load_dotenv
+from src.ai_agents.open_ai import OpenAiAgent
+
+open_ai_agent = OpenAiAgent()
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
 
 
 def parse_ids(text: str) -> List[int]:
@@ -22,7 +23,7 @@ def parse_ids(text: str) -> List[int]:
     return [int(p) for p in parts]
 
 
-async def recommend_stories(
+def recommend_stories(
     prompt: str,
     user_tags: List[str],
     story_pool: List[Story]
@@ -31,6 +32,8 @@ async def recommend_stories(
         "You are a lightning-fast recommendation engine. "
         "Given a set of user tags and a pool of stories (each with ID, title, intro, and tags), "
         "you must return EXACTLY a JSON array of the 10 story IDs that best match the user's tags. "
+        "you must return exactly 10 story IDs—no more, no fewer—as a JSON array. "
+        "Under no circumstances should you return fewer or more than 10 IDs. "
         "Do NOT include any additional commentary—only output the JSON array."
     )
 
@@ -39,7 +42,7 @@ async def recommend_stories(
     stories_text = ""
     for s in story_pool:
         stories_text += (
-            f"ID: {s['id']}\n"
+            f"ID: {int(s['id'])}\n"
             f"Title: {s['title']}\n"
             f"Intro: {s['intro']}\n"
             f"Tags: {', '.join(s['tags'])}\n\n"
@@ -51,16 +54,16 @@ async def recommend_stories(
         f"Stories:\n{stories_text}"
     )
 
-    resp = await openai.ChatCompletion.acreate(
-        model="gpt-4",
+    resp = open_ai_agent.client.chat.completions.create(
+        model="gpt-4o-mini",
         messages=[
             {"role": "system", "content": system_prompt},
             {"role": "user",   "content": user_prompt}
         ],
         temperature=0.0,
-        max_tokens=100
+        max_tokens=200
     )
 
-    content = resp.choices[0].message["content"]
+    content = resp.choices[0].message.content
     return parse_ids(content)
 
