@@ -3,7 +3,7 @@ import re
 import time
 import asyncio
 from typing import List, Dict, Any
-from user import users
+from src.data.user import users
 
 from dotenv import load_dotenv
 
@@ -81,7 +81,7 @@ def expand_story_pool(seeds: List[Story], target_count: int = 100) -> List[Story
 
 async def main():
     print("Expanding seed stories to ~100 with GPT-4...")
-    max_seconds= 10
+    max_seconds= 15
     story_pool = expand_story_pool(seed_stories, target_count=30)
 
     test_users = users
@@ -118,12 +118,10 @@ async def main():
         print("Calling Prompt-Optimizer to generate new prompt...\n")
         iteration += 1
         new_prompt = optimize_prompt(last_prompt, score, failures)
-        print(new_prompt)
         last_prompt = new_prompt
 
     await cache_user_prompt(f"prompt:user{user['id']}", last_prompt)
     print("Final prompt:")
-    print(scores)
     print(last_prompt)
     print("Loop finished.")
 

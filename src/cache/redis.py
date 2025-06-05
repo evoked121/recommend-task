@@ -1,7 +1,5 @@
 import os
-import json
-import hashlib
-from typing import List, Optional
+from typing import Optional
 
 import redis.asyncio as aioredis
 from dotenv import load_dotenv

@@ -11,7 +11,7 @@ open_ai_agent = OpenAiAgent()
 def simulate_user_tags(user_profile: List[str]) -> List[str]:
     system_prompt = (
         "You are a tag prediction assistant. Given a list of available preference tags for a user, "
-        "select between 8 and 12 tags that best represent what this user would choose on Sekai’s first screen. "
+        "select between 3 and 5 tags that best represent what this user would choose on Sekai’s first screen. "
         "Return EXACTLY a JSON array of strings (e.g., [\"tag1\", \"tag2\", ...]). "
         "Do NOT include any extra commentary, explanation, or Python/JSON syntax—only the JSON array itself."
     )
