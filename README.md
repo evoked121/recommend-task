@@ -9,7 +9,7 @@
 
 2. **Clone & Install**  
    ```bash
-   git clone https://github.com/your-org/recommend-system.git
+   git clone https://github.com/evoked121/recommend-task.git
    cd recommend-system
    python3 -m venv venv
    source venv/bin/activate
@@ -17,5 +17,6 @@
    docker pull redis:latest
    docker run -d --name local-redis -p 6379:6379 redis:latest
 
-3. **Clone & Install**  
+3. **Run**
+   ```bash
    python main.py
