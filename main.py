@@ -10,8 +10,9 @@ from dotenv import load_dotenv
 from src.ai_agents.prompt_optimizer import optimize_prompt
 from src.ai_agents.evaluation import evaluate_for_user
 from src.dataclass import Story
-from src.cache.redis import get_user_prompt, cache_user_prompt
+from src.cache.redis import get_user_prompt, cache_user_prompt, get_story_pool, cache_story_pool, cache_story_embeddings
 from src.ai_agents.open_ai import OpenAiAgent
+from src.ai_agents.recommend import generate_embedding
 
 load_dotenv()
 
@@ -51,7 +52,11 @@ seed_stories: List[Story] = [
 ]
 
 
-def expand_story_pool(seeds: List[Story], target_count: int = 100) -> List[Story]:
+async def expand_story_pool(seeds: List[Story], target_count: int = 130) -> List[Story]:
+    cached_pool = await get_story_pool()
+    if cached_pool:
+        return cached_pool
+    
     seeds_text = json.dumps(seeds, ensure_ascii=False)
     system_prompt = (
         "You are a story generator assistant. Given a small list of Sekai-style stories "
@@ -59,7 +64,7 @@ def expand_story_pool(seeds: List[Story], target_count: int = 100) -> List[Story
         f"of stories is exactly {target_count}. Return EXACTLY a JSON array of story objects, "
         "where each object has the fields: id (integer), title (string), intro (string), "
         "and tags (array of strings). For speed and brevity, generate each new story "
-        "with an intro of no more than 10 English words. Ensure new IDs start higher than existing seed IDs. "
+        "with an intro of no more than 30 English words. Ensure new IDs start higher than existing seed IDs. "
         "Do NOT output any extra commentary—only the JSON array."
     )
     user_prompt = f"Seed Stories:\n{seeds_text}"
@@ -76,19 +81,27 @@ def expand_story_pool(seeds: List[Story], target_count: int = 100) -> List[Story
     generated = resp.choices[0].message.content
     match = re.search(r"\[.*\]", generated, re.S)
     stories = json.loads(match.group(0))
+
+    await cache_story_pool(stories)
+    
+    for story in stories:
+        story_text = f"{story['title']} {story['intro']} {' '.join(story['tags'])}"
+        embedding = await generate_embedding(story_text)
+        await cache_story_embeddings(story['id'], embedding)
+    
     return stories
 
 
 async def main():
     print("Expanding seed stories to ~100 with GPT-4...")
+    story_pool = await expand_story_pool(seed_stories, target_count=30)
     max_seconds= 15
-    story_pool = expand_story_pool(seed_stories, target_count=30)
 
     test_users = users
-    user = test_users[1]
+    user = test_users[3]
 
     last_prompt = await get_user_prompt(f"prompt:user{user['id']}")
-    last_prompt = last_prompt if last_prompt else "Given user tags, return 10 story IDs from the pool."
+    last_prompt = last_prompt if last_prompt else "Return 10 story IDs from the pool."
 
     scores = []
     start_time = time.time()
