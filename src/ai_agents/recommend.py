@@ -31,9 +31,9 @@ def recommend_stories(
     system_prompt = (
         "You are a lightning-fast recommendation engine. "
         "Given a set of user tags and a pool of stories (each with ID, title, intro, and tags), "
-        "you must return EXACTLY a JSON array of the 10 story IDs that best match the user's tags. "
+        "you must consider the entire set of tags together to determine which 10 stories best match the user’s interests. "
         "you must return exactly 10 story IDs—no more, no fewer—as a JSON array. "
-        "Under no circumstances should you return fewer or more than 10 IDs. "
+        "Even if fewer than 10 stories strongly match, still provide 10 unique IDs by including the best possible alternatives. "
         "Do NOT include any additional commentary—only output the JSON array."
     )
 
@@ -61,7 +61,7 @@ def recommend_stories(
             {"role": "user",   "content": user_prompt}
         ],
         temperature=0.0,
-        max_tokens=200
+        max_tokens=500
     )
 
     content = resp.choices[0].message.content

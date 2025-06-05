@@ -32,7 +32,7 @@ def parse_ids(text: str) -> List[int]:
 def simulate_user_tags(user_profile: List[str]) -> List[str]:
     system_prompt = (
         "You are a tag prediction assistant. Given a list of available preference tags for a user, "
-        "select between 5 and 8 tags that best represent what this user would choose on Sekai’s first screen. "
+        "select between 8 and 12 tags that best represent what this user would choose on Sekai’s first screen. "
         "Return EXACTLY a JSON array of strings (e.g., [\"tag1\", \"tag2\", ...]). "
         "Do NOT include any extra commentary, explanation, or Python/JSON syntax—only the JSON array itself."
     )
@@ -55,9 +55,11 @@ def simulate_user_tags(user_profile: List[str]) -> List[str]:
 def ground_truth_top10(user_profile: dict, story_pool: List[Story]) -> List[int]:
     system_prompt = (
         "You are an expert story recommender. Given a user’s full profile and a list of Sekai stories "
-        "(each has ID, title, tags, and intro), return EXACTLY a JSON array of the 10 story IDs "
-        "that best match this user’s preferences. Do NOT include any additional commentary."
+        "(each has ID, title, tags, and intro)"
+        "you must consider the entire set of tags together to determine which 10 stories best match the user’s interests. "
+        "Do NOT include any additional commentary."
         "you must return exactly 10 story IDs—no more, no fewer—as a JSON array. "
+        "Even if fewer than 10 stories strongly match, still provide 10 unique IDs by including the best possible alternatives. "
         "Under no circumstances should you return fewer or more than 10 IDs. "
     )
 

@@ -83,19 +83,16 @@ def expand_story_pool(seeds: List[Story], target_count: int = 100) -> List[Story
 async def main():
     print("Expanding seed stories to ~100 with GPT-4...")
     story_pool = expand_story_pool(seed_stories, target_count=30)
-    print(story_pool[0])
-    print(f"Expansion complete: {len(story_pool)} stories loaded.\n")
 
     test_users = users
 
-    last_prompt = "Given user tags {tags}, return 10 story IDs from the pool."
-    prev_avg = 0.0
+    last_prompt = "Given user tags, return 10 story IDs from the pool."
+    scores = []
 
-    for it in range(1, 2):
+    for it in range(1, 4):
         print(f"=== Iteration {it} ===")
         print(f"Using prompt:\n{last_prompt}\n")
 
-        scores = []
         failures: List[Dict[str, Any]] = []
 
         user = test_users[0]
@@ -105,20 +102,19 @@ async def main():
         scores.append(score)
         failures.append(detail)
 
-        avg_score = scores[0]
-        print(f"\nIteration {it} Precision@10 = {avg_score:.4f}\n")
+        print(f"\nIteration {it} Precision@10 = {score:.4f}\n")
 
-        if it > 1 and (avg_score - prev_avg) < 0.005:
-            print(f"Precision plateaued (Δ={avg_score - prev_avg:.4f}); stopping.\n")
+        if score >= 0.8:
+            print(f"Precision plateaued (Δ={score:.4f}); stopping.\n")
             break
 
         print("Calling Prompt-Optimizer to generate new prompt...\n")
-        new_prompt = optimize_prompt(last_prompt, avg_score, failures)
+        new_prompt = optimize_prompt(last_prompt, score, failures)
         print(new_prompt)
         last_prompt = new_prompt
-        prev_avg = avg_score
 
     print("Final prompt:")
+    print(scores)
     print(last_prompt)
     print("Loop finished.")
 
