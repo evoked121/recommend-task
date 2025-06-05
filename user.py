@@ -1,5 +1,5 @@
 users=[
-  [
+  {"id":1, "tags":[
     "choice-driven",
     "high-agency",
     "dominant protector",
@@ -46,8 +46,8 @@ users=[
     "anti-hero",
     "strategy",
     "fan-groups"
-  ],
-  [
+  ]},
+  {"id":2, "tags":[
     "self-insert",
     "choice-driven",
     "narrator",
@@ -85,8 +85,8 @@ users=[
     "rival advances",
     "legacy",
     "romance"
-  ],
-  [
+  ]},
+  {"id":3, "tags":[
     "male roleplayer",
     "immersive",
     "choice-driven narratives",
@@ -115,5 +115,5 @@ users=[
     "leaderboard climber",
     "protective sibling loyalty",
     "guilt"
-  ]
+  ]}
 ]

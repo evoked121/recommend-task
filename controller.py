@@ -1,7 +1,6 @@
-import os
 import json
 import re
-import ast
+import time
 import asyncio
 from typing import List, Dict, Any
 from user import users
@@ -11,7 +10,7 @@ from dotenv import load_dotenv
 from src.ai_agents.prompt_optimizer import optimize_prompt
 from src.ai_agents.evaluation import evaluate_for_user
 from src.dataclass import Story
-#from src.ai_agents.recommend import recommend_stories
+from src.cache.redis import get_user_prompt, cache_user_prompt
 from src.ai_agents.open_ai import OpenAiAgent
 
 load_dotenv()
@@ -82,37 +81,47 @@ def expand_story_pool(seeds: List[Story], target_count: int = 100) -> List[Story
 
 async def main():
     print("Expanding seed stories to ~100 with GPT-4...")
+    max_seconds= 10
     story_pool = expand_story_pool(seed_stories, target_count=30)
 
     test_users = users
+    user = test_users[1]
 
-    last_prompt = "Given user tags, return 10 story IDs from the pool."
+    last_prompt = await get_user_prompt(f"prompt:user{user['id']}")
+    last_prompt = last_prompt if last_prompt else "Given user tags, return 10 story IDs from the pool."
+
     scores = []
+    start_time = time.time()
+    iteration = 1
 
-    for it in range(1, 4):
-        print(f"=== Iteration {it} ===")
+    while True:
+        elapsed = time.time() - start_time
+        if elapsed > max_seconds:
+                await cache_user_prompt(f"prompt:user{user['id']}", last_prompt)
+                print(f"[{user['id']}] Time limit reached ({elapsed:.1f}s). Stopping optimization.")
+                break
         print(f"Using prompt:\n{last_prompt}\n")
 
         failures: List[Dict[str, Any]] = []
-
-        user = test_users[0]
         
-        score, detail = await evaluate_for_user(user, last_prompt, story_pool)
+        score, detail = await evaluate_for_user(user['tags'], last_prompt, story_pool)
         print(f"Precision@10 = {score:.2f}")
         scores.append(score)
         failures.append(detail)
 
-        print(f"\nIteration {it} Precision@10 = {score:.4f}\n")
+        print(f"\n Precision@10 = {score:.4f}\n")
 
         if score >= 0.8:
-            print(f"Precision plateaued (Δ={score:.4f}); stopping.\n")
+            print(f"Iteration:{iteration} Precision plateaued (Δ={score:.4f}); stopping.\n")
             break
 
         print("Calling Prompt-Optimizer to generate new prompt...\n")
+        iteration += 1
         new_prompt = optimize_prompt(last_prompt, score, failures)
         print(new_prompt)
         last_prompt = new_prompt
 
+    await cache_user_prompt(f"prompt:user{user['id']}", last_prompt)
     print("Final prompt:")
     print(scores)
     print(last_prompt)
