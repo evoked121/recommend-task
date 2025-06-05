@@ -10,19 +10,6 @@ open_ai_agent = OpenAiAgent()
 
 load_dotenv()
 
-
-def parse_ids(text: str) -> List[int]:
-    text = text.strip()
-    try:
-        data = json.loads(text)
-        if isinstance(data, list) and all(isinstance(n, int) for n in data):
-            return data
-    except json.JSONDecodeError:
-        pass
-    parts = [p for p in re.split(r"[\s,;\n]+", text) if p.strip().isdigit()]
-    return [int(p) for p in parts]
-
-
 def recommend_stories(
     prompt: str,
     user_tags: List[str],
@@ -64,6 +51,8 @@ def recommend_stories(
         max_tokens=500
     )
 
-    content = resp.choices[0].message.content
-    return parse_ids(content)
+    generated = resp.choices[0].message.content
+    match = re.search(r"\[.*\]", generated, re.S)
+    content = json.loads(match.group(0))
+    return content
 

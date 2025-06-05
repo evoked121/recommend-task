@@ -8,27 +8,6 @@ from src.ai_agents.open_ai import OpenAiAgent
 
 open_ai_agent = OpenAiAgent()
 
-def parse_tags(text: str) -> List[str]:
-    text = text.strip()
-    try:
-        data = json.loads(text)
-        if isinstance(data, list) and all(isinstance(t, str) for t in data):
-            return [t.strip() for t in data]
-    except json.JSONDecodeError:
-        pass
-    return [t.strip() for t in text.split(",") if t.strip()]
-
-def parse_ids(text: str) -> List[int]:
-    text = text.strip()
-    try:
-        data = json.loads(text)
-        if isinstance(data, list) and all(isinstance(n, int) for n in data):
-            return data
-    except json.JSONDecodeError:
-        pass
-    parts = [p for p in re.split(r"[\s,;\n]+", text) if p.strip().isdigit()]
-    return [int(p) for p in parts]
-
 def simulate_user_tags(user_profile: List[str]) -> List[str]:
     system_prompt = (
         "You are a tag prediction assistant. Given a list of available preference tags for a user, "
@@ -81,7 +60,10 @@ def ground_truth_top10(user_profile: dict, story_pool: List[Story]) -> List[int]
         temperature=0.0,
         max_tokens=200
     )
-    return parse_ids(resp.choices[0].message.content)
+    generated = resp.choices[0].message.content
+    match = re.search(r"\[.*\]", generated, re.S)
+    content = json.loads(match.group(0))
+    return content
 
 async def evaluate_for_user(
     user_profile: List[str],
